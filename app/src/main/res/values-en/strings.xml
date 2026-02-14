@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SecureCall</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">SecureCall</string>
+    <string name="login_subtitle">Sign in to continue</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="forgot_password">Forgot your password?</string>
+    <string name="login_button">Sign in</string>
+    <string name="login_with_phone">Sign in with phone</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="register_link">Sign up</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Create account</string>
+    <string name="register_subtitle">Complete your details to register</string>
+    <string name="name_label">Full name</string>
+    <string name="confirm_password_label">Confirm password</string>
+    <string name="register_button">Sign up</string>
+    <string name="register_with_phone">Sign up with phone</string>
+    <string name="have_account">Already have an account?</string>
+    <string name="login_link">Sign in</string>
+
+    <!-- Validations -->
+    <string name="error_email_required">Email is required</string>
+    <string name="error_email_invalid">Invalid email</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_password_min_length">Minimum 6 characters</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_name_min_length">Minimum 3 characters</string>
+    <string name="error_confirm_password">Confirm your password</string>
+    <string name="error_passwords_dont_match">Passwords don\'t match</string>
+
+    <!-- Auth errors -->
+    <string name="error_signup_failed">Sign up failed</string>
+    <string name="error_login_failed">Sign in failed</string>
+    <string name="error_phone_verification_failed">Phone verification failed</string>
+    <string name="error_password_reset_failed">Password reset failed</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="back">Back</string>
+</resources>

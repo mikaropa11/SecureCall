@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SecureCall</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">SecureCall</string>
+    <string name="login_subtitle">Inicia sessió per continuar</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Contrasenya</string>
+    <string name="forgot_password">Has oblidat la contrasenya?</string>
+    <string name="login_button">Iniciar sessió</string>
+    <string name="login_with_phone">Iniciar amb telèfon</string>
+    <string name="no_account">No tens compte?</string>
+    <string name="register_link">Registra\'t</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Crear compte</string>
+    <string name="register_subtitle">Completa les teves dades per registrar-te</string>
+    <string name="name_label">Nom complet</string>
+    <string name="confirm_password_label">Confirmar contrasenya</string>
+    <string name="register_button">Registrar-se</string>
+    <string name="register_with_phone">Registrar amb telèfon</string>
+    <string name="have_account">Ja tens compte?</string>
+    <string name="login_link">Inicia sessió</string>
+
+    <!-- Validations -->
+    <string name="error_email_required">L\'email és requerit</string>
+    <string name="error_email_invalid">Email invàlid</string>
+    <string name="error_password_required">La contrasenya és requerida</string>
+    <string name="error_password_min_length">Mínim 6 caràcters</string>
+    <string name="error_name_required">El nom és requerit</string>
+    <string name="error_name_min_length">Mínim 3 caràcters</string>
+    <string name="error_confirm_password">Confirma la teva contrasenya</string>
+    <string name="error_passwords_dont_match">Les contrasenyes no coincideixen</string>
+
+    <!-- Auth errors -->
+    <string name="error_signup_failed">Registre fallit</string>
+    <string name="error_login_failed">Inici de sessió fallit</string>
+    <string name="error_phone_verification_failed">Verificació telefònica fallida</string>
+    <string name="error_password_reset_failed">Recuperació de contrasenya fallida</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="back">Tornar</string>
+</resources>
