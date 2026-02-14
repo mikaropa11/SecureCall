@@ -1,0 +1,22 @@
+package com.example.securecall.di
+
+import com.example.securecall.data.repository.AuthenticationRepositoryImpl
+import com.example.securecall.domain.repository.AuthenticationRepository
+import com.example.securecall.ui.viewmodel.AuthenticationViewModel
+import com.google.firebase.auth.FirebaseAuth
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideAuthenticationRepository(firebaseAuth: FirebaseAuth): AuthenticationRepository =
+        AuthenticationRepositoryImpl(firebaseAuth)
+
+}
