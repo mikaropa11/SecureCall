@@ -13,9 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.securecall.ui.viewmodel.AuthenticationViewModel
+
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    viewModel: AuthenticationViewModel = hiltViewModel()
+               ) {
     Scaffold() { paddingValues ->
         Column(modifier = Modifier
             .fillMaxSize()
@@ -24,6 +30,9 @@ fun HomeScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Home Screen")
+            Button(onClick = { viewModel.logOut() }) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }

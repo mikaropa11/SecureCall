@@ -46,7 +46,8 @@ fun AuthTextField(
     imeAction: ImeAction = ImeAction.Next,
     onImeAction: () -> Unit = {},
     isError: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
 
     var passwordVisible by remember { mutableStateOf(false) }
@@ -71,7 +72,7 @@ fun AuthTextField(
                         )
                     }
                 }
-            } else null,
+            } else trailingIcon,
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
                 imeAction = imeAction

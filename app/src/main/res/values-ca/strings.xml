@@ -9,7 +9,6 @@
     <string name="password_label">Contrasenya</string>
     <string name="forgot_password">Has oblidat la contrasenya?</string>
     <string name="login_button">Iniciar sessió</string>
-    <string name="login_with_phone">Iniciar amb telèfon</string>
     <string name="no_account">No tens compte?</string>
     <string name="register_link">Registra\'t</string>
 
@@ -19,9 +18,13 @@
     <string name="name_label">Nom complet</string>
     <string name="confirm_password_label">Confirmar contrasenya</string>
     <string name="register_button">Registrar-se</string>
-    <string name="register_with_phone">Registrar amb telèfon</string>
     <string name="have_account">Ja tens compte?</string>
     <string name="login_link">Inicia sessió</string>
+    <string name="username_label">Nom d\'usuari</string>
+    <string name="error_username_required">El nom d\'usuari és requerit</string>
+    <string name="error_username_min_length">Mínim 3 caràcters</string>
+    <string name="error_username_max_length">Màxim 20 caràcters</string>
+    <string name="error_username_unavailable">Aquest nom d\'usuari no està disponible</string>
 
     <!-- Validations -->
     <string name="error_email_required">L\'email és requerit</string>
@@ -36,7 +39,6 @@
     <!-- Auth errors -->
     <string name="error_signup_failed">Registre fallit</string>
     <string name="error_login_failed">Inici de sessió fallit</string>
-    <string name="error_phone_verification_failed">Verificació telefònica fallida</string>
     <string name="error_password_reset_failed">Recuperació de contrasenya fallida</string>
 
     <!-- Common -->

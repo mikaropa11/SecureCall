@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +21,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.securecall.R
+import com.example.securecall.domain.model.User
+import com.example.securecall.domain.model.UserStatus
 import com.example.securecall.ui.components.AuthTextField
 import com.example.securecall.ui.components.PrimaryButton
 import com.example.securecall.ui.components.SecondaryButton
 import com.example.securecall.ui.viewmodel.AuthState
 import com.example.securecall.ui.viewmodel.AuthenticationViewModel
+import com.example.securecall.ui.viewmodel.UsernameCheckState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,20 +38,29 @@ fun SignUpScreen(
     viewModel: AuthenticationViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
     var nameError by remember { mutableStateOf<String?>(null) }
+    var usernameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
 
-    val authState by viewModel.authState.collectAsState()
+    var successMessage by remember { mutableStateOf<String?>(null) }
 
-    //Error messages
+    val authState by viewModel.authState.collectAsState()
+    val usernameCheckState by viewModel.usernameCheckState.collectAsState()
+
+    // Error messages
     val errorNameRequired = stringResource(R.string.error_name_required)
     val errorNameMinLength = stringResource(R.string.error_name_min_length)
+    val errorUsernameRequired = stringResource(R.string.error_username_required)
+    val errorUsernameMinLength = stringResource(R.string.error_username_min_length)
+    val errorUsernameMaxLength = stringResource(R.string.error_username_max_length)
+    val errorUsernameUnavailable = stringResource(R.string.error_username_unavailable)
     val errorEmailRequired = stringResource(R.string.error_email_required)
     val errorEmailInvalid = stringResource(R.string.error_email_invalid)
     val errorPasswordRequired = stringResource(R.string.error_password_required)
@@ -54,12 +68,15 @@ fun SignUpScreen(
     val errorConfirmPassword = stringResource(R.string.error_confirm_password)
     val errorPasswordDontMatch = stringResource(R.string.error_passwords_dont_match)
 
+    // Navegar cuando se registre exitosamente
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
+        if (authState is AuthState.AuthenticatedWithoutVerification) {
             onNavigateToHome()
+            //onNavigateToFaceRegistration()
         }
     }
 
+    // Mostrar errores de autenticación
     LaunchedEffect(authState) {
         if (authState is AuthState.Error) {
             val error = (authState as AuthState.Error).message
@@ -124,7 +141,7 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Nombre
+            // Nombre completo
             AuthTextField(
                 value = name,
                 onValueChange = {
@@ -140,11 +157,63 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Username con validación en tiempo real
+            AuthTextField(
+                value = username,
+                onValueChange = {
+                    username = it.lowercase().trim()
+                    usernameError = null
+
+                    // Validar en tiempo real
+                    if (it.length >= 3 && it.length <= 20) {
+                        viewModel.checkUsernameAvailability(it)
+                    } else {
+                        viewModel.resetUsernameCheck()
+                    }
+                },
+                label = stringResource(R.string.username_label),
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                isError = usernameError != null,
+                errorMessage = usernameError,
+                trailingIcon = {
+                    when (usernameCheckState) {
+                        is UsernameCheckState.Checking -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        is UsernameCheckState.Available -> {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Disponible",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        is UsernameCheckState.Unavailable -> {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "No disponible",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        is UsernameCheckState.Invalid -> {
+                            usernameError = (usernameCheckState as UsernameCheckState.Invalid).reason
+                            null
+                        }
+                        else -> null
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Email
             AuthTextField(
                 value = email,
                 onValueChange = {
-                    email = it
+                    email = it.trim()
                     emailError = null
                 },
                 label = stringResource(R.string.email_label),
@@ -182,9 +251,6 @@ fun SignUpScreen(
                 label = stringResource(R.string.confirm_password_label),
                 isPassword = true,
                 imeAction = ImeAction.Done,
-                onImeAction = {
-                    // Validar y registrar
-                },
                 isError = confirmPasswordError != null,
                 errorMessage = confirmPasswordError
             )
@@ -195,14 +261,22 @@ fun SignUpScreen(
             PrimaryButton(
                 text = stringResource(R.string.register_button),
                 onClick = {
+                    // Reset errors
                     nameError = null
+                    usernameError = null
                     emailError = null
                     passwordError = null
                     confirmPasswordError = null
 
+                    // Validaciones
                     when {
                         name.isBlank() -> nameError = errorNameRequired
                         name.length < 3 -> nameError = errorNameMinLength
+                        username.isBlank() -> usernameError = errorUsernameRequired
+                        username.length < 3 -> usernameError = errorUsernameMinLength
+                        username.length > 20 -> usernameError = errorUsernameMaxLength
+                        usernameCheckState is UsernameCheckState.Unavailable ->
+                            usernameError = errorUsernameUnavailable
                         email.isBlank() -> emailError = errorEmailRequired
                         !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
                             emailError = errorEmailInvalid
@@ -210,35 +284,17 @@ fun SignUpScreen(
                         password.length < 6 -> passwordError = errorPasswordMinLength
                         confirmPassword.isBlank() -> confirmPasswordError = errorConfirmPassword
                         password != confirmPassword -> confirmPasswordError = errorPasswordDontMatch
-                        else -> viewModel.signUpWithEmail(email, password)
+                        else -> {
+                            viewModel.signUpWithEmail(email, password, name, username)
+                        }
                     }
                 },
                 isLoading = authState is AuthState.Loading,
-                enabled = name.isNotBlank() && email.isNotBlank() &&
-                        password.isNotBlank() && confirmPassword.isNotBlank()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(modifier = Modifier.weight(1f))
-                Text(
-                    text = "O",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SecondaryButton(
-                text = stringResource(R.string.register_with_phone),
-                onClick = { /* TODO */ }
+                enabled = name.isNotBlank() &&
+                        username.isNotBlank() &&
+                        email.isNotBlank() &&
+                        password.isNotBlank() &&
+                        confirmPassword.isNotBlank()
             )
 
             Spacer(modifier = Modifier.height(24.dp))

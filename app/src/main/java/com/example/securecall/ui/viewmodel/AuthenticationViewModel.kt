@@ -5,7 +5,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.securecall.domain.model.User
+import com.example.securecall.domain.model.UserStatus
 import com.example.securecall.domain.repository.AuthenticationRepository
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.PhoneAuthCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +24,9 @@ class AuthenticationViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState = _authState.asStateFlow()
 
+    private val _usernameCheckState = MutableStateFlow<UsernameCheckState>(UsernameCheckState.Idle)
+    val usernameCheckState = _usernameCheckState.asStateFlow()
+
     init {
         isUserAuthenticated()
     }
@@ -33,12 +39,32 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    fun signUpWithEmail(email: String, password: String) {
+    fun signUpWithEmail(email: String, password: String, name: String, username: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             authenticationRepository.signUpWithEmail(email, password).fold(
-                onSuccess = {
-                    _authState.value = AuthState.Authenticated
+                onSuccess = { firebaseUser ->
+                    firebaseUser.sendEmailVerification()
+                    val user = User(
+                        userId = firebaseUser.uid,
+                        name = name,
+                        username = username,
+                        email = email,
+                        photoUrl = null,
+                        faceEmbedding = null,
+                        status = UserStatus.ONLINE,
+                        lastSeen = System.currentTimeMillis(),
+                        createdAt = System.currentTimeMillis()
+                    )
+
+                    authenticationRepository.saveUserProfile(user).fold(
+                        onSuccess = {
+                            _authState.value = AuthState.AuthenticatedWithoutVerification
+                        },
+                        onFailure = {
+                            _authState.value = AuthState.Error("Error saving profile")
+                        }
+                    )
                     Log.d("Authentication - signUpWithEmail()", "$email registered")
                 },
                 onFailure = {
@@ -54,7 +80,7 @@ class AuthenticationViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             authenticationRepository.loginWithEmail(email, password).fold(
                 onSuccess = {
-                    _authState.value = AuthState.Authenticated
+                    _authState.value = AuthState.AuthenticatedWithoutVerification
                     Log.d("Authentication - loginWithEmail()", "$email registered")
                 },
                 onFailure = {
@@ -65,17 +91,17 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    fun verifyPhoneCredential(credential: PhoneAuthCredential, phoneNumber: String) {
+    fun verifyPhoneCredential(credential: PhoneAuthCredential) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             authenticationRepository.verifyPhoneCredential(credential).fold(
                 onSuccess = {
                     _authState.value = AuthState.Authenticated
-                    Log.d("Authentication - verifyPhoneCredential()", "$phoneNumber registered")
+                    Log.d("Authentication - verifyPhoneCredential()", "Phone number registered")
                 },
                 onFailure = {
                     _authState.value = AuthState.Error(it.message ?: "Failed to verify phone number")
-                    Log.e("Authentication - verifyPhoneCredential()", "Error verifying this number: $phoneNumber")
+                    Log.e("Authentication - verifyPhoneCredential()", "Error verifying phone number")
                 }
             )
         }
@@ -100,12 +126,112 @@ class AuthenticationViewModel @Inject constructor(
         authenticationRepository.logOut()
         _authState.value = AuthState.Unauthenticated
     }
+
+    fun getCurrentUserId(): String? {
+        return authenticationRepository.currentUser?.uid
+    }
+
+    fun isNewUser(userId: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            authenticationRepository.isNewUser(userId).fold(
+                onSuccess = { isNew -> onResult(isNew) },
+                onFailure = { onResult(true) }
+            )
+        }
+    }
+
+    fun checkUsernameAvailability(username: String) {
+        if (!username.matches(Regex("^[a-zA-Z0-9_]+$"))) {
+            _usernameCheckState.value = UsernameCheckState.Invalid("Solo letras, números y guión bajo")
+            return
+        }
+
+        viewModelScope.launch {
+            _usernameCheckState.value = UsernameCheckState.Checking
+            authenticationRepository.checkUsernameAvailable(username).fold(
+                onSuccess = { isAvailable ->
+                    _usernameCheckState.value = if (isAvailable) {
+                        UsernameCheckState.Available
+                    } else {
+                        UsernameCheckState.Unavailable
+                    }
+                },
+                onFailure = {
+                    _usernameCheckState.value = UsernameCheckState.Error(it.message ?: "Error al verificar")
+                }
+            )
+        }
+    }
+
+    fun resetUsernameCheck() {
+        _usernameCheckState.value = UsernameCheckState.Idle
+    }
+    fun saveUserProfile(user: User, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            authenticationRepository.saveUserProfile(user).fold(
+                onSuccess = {
+                    _authState.value = AuthState.AuthenticatedWithoutVerification
+                    onResult(true)
+                },
+                onFailure = {
+                    onResult(false)
+                }
+            )
+        }
+    }
+
+    fun getUserProfile(userId: String, onResult: (User?) -> Unit) {
+        viewModelScope.launch {
+            authenticationRepository.getUserProfile(userId).fold(
+                onSuccess = { user -> onResult(user) },
+                onFailure = { onResult(null) }
+            )
+        }
+    }
+
+    fun updateUserStatus(status: UserStatus) {
+        val userId = getCurrentUserId() ?: return  // ← return simple
+        viewModelScope.launch {
+            authenticationRepository.updateUserStatus(userId, status)
+        }
+    }
+
+    fun updateFaceEmbedding(embedding: List<Float>, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val userId = getCurrentUserId()
+            if (userId == null) {
+                onResult(false)
+                return@launch
+            }
+
+            authenticationRepository.updateFaceEmbedding(userId, embedding).fold(
+                onSuccess = {
+                    onResult(true)
+                    _authState.value = AuthState.Authenticated
+                },
+                onFailure = {
+                    _authState.value = AuthState.AuthenticatedWithoutVerification
+                    onResult(false)
+                }
+            )
+        }
+    }
 }
 
 sealed class AuthState {
     object Loading : AuthState()
     object Authenticated : AuthState()
+    object AuthenticatedWithoutVerification: AuthState()
     object Unauthenticated : AuthState()
     object PasswordResetSent : AuthState()
     data class Error(val message: String) : AuthState()
+}
+
+sealed class UsernameCheckState {
+    object Idle : UsernameCheckState()
+    object Checking : UsernameCheckState()
+    object Available : UsernameCheckState()
+    object Unavailable : UsernameCheckState()
+    data class Invalid(val reason: String) : UsernameCheckState()
+    data class Error(val message: String) : UsernameCheckState()
 }

@@ -46,7 +46,7 @@ fun LoginScreen(
 
     // Navegar cuando se autentica
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
+        if (authState is AuthState.Authenticated || authState is AuthState.AuthenticatedWithoutVerification) {
             onNavigateToHome()
         }
     }
@@ -167,31 +167,6 @@ fun LoginScreen(
                 },
                 isLoading = authState is AuthState.Loading,
                 enabled = email.isNotBlank() && password.isNotBlank()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Divider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(modifier = Modifier.weight(1f))
-                Text(
-                    text = "O",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botón Phone
-            SecondaryButton(
-                text = stringResource(R.string.login_with_phone),
-                onClick = { /* TODO: Implementar phone auth */ }
             )
 
             Spacer(modifier = Modifier.weight(1f))

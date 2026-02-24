@@ -68,6 +68,8 @@ dependencies {
     //Hilt DI
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    //Firebase Auth
+    //Firebase
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 }
