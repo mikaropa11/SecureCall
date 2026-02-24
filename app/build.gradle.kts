@@ -5,6 +5,7 @@ plugins {
     //Hilt DI
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -63,7 +64,12 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.compose.material.icons.extended)
     //Hilt DI
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    //Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 }

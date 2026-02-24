@@ -1,3 +1,46 @@
 <resources>
-    <string name="app_name">Secure Call</string>
+    <string name="app_name">SecureCall</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">SecureCall</string>
+    <string name="login_subtitle">Inicia sesión para continuar</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="no_account">¿No tienes cuenta?</string>
+    <string name="register_link">Regístrate</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_subtitle">Completa tus datos para registrarte</string>
+    <string name="name_label">Nombre completo</string>
+    <string name="confirm_password_label">Confirmar contraseña</string>
+    <string name="register_button">Registrarse</string>
+    <string name="have_account">¿Ya tienes cuenta?</string>
+    <string name="login_link">Inicia sesión</string>
+    <string name="username_label">Nombre de usuario</string>
+    <string name="error_username_required">El nombre de usuario es requerido</string>
+    <string name="error_username_min_length">Mínimo 3 caracteres</string>
+    <string name="error_username_max_length">Máximo 20 caracteres</string>
+    <string name="error_username_unavailable">Este nombre de usuario no está disponible</string>
+
+    <!-- Validations -->
+    <string name="error_email_required">El email es requerido</string>
+    <string name="error_email_invalid">Email inválido</string>
+    <string name="error_password_required">La contraseña es requerida</string>
+    <string name="error_password_min_length">Mínimo 6 caracteres</string>
+    <string name="error_name_required">El nombre es requerido</string>
+    <string name="error_name_min_length">Mínimo 3 caracteres</string>
+    <string name="error_confirm_password">Confirma tu contraseña</string>
+    <string name="error_passwords_dont_match">Las contraseñas no coinciden</string>
+
+    <!-- Auth errors -->
+    <string name="error_signup_failed">Registro fallido</string>
+    <string name="error_login_failed">Inicio de sesión fallido</string>
+    <string name="error_password_reset_failed">Recuperación de contraseña fallida</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="back">Volver</string>
 </resources>
