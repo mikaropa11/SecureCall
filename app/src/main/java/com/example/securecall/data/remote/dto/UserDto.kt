@@ -5,6 +5,7 @@ import com.google.firebase.Timestamp
 data class UserDto(
     val userId: String = "",
     val username: String = "",
+    val usernameLowercase: String = "",
     val name: String = "",
     val email: String = "",
     val photoUrl: String? = null,
@@ -17,7 +18,9 @@ data class UserDto(
 
     fun toMap(): Map<String, Any?> {
         return mapOf(
+            "userId" to userId,
             "username" to username,
+            "usernameLowercase" to usernameLowercase,
             "name" to name,
             "email" to email,
             "photoUrl" to photoUrl,

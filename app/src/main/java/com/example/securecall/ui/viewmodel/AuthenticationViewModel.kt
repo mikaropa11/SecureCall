@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.securecall.domain.model.User
 import com.example.securecall.domain.model.UserStatus
 import com.example.securecall.domain.repository.AuthenticationRepository
+import com.example.securecall.domain.repository.UserRepository
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.PhoneAuthCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthenticationViewModel @Inject constructor(
-    private val authenticationRepository: AuthenticationRepository
+    private val authenticationRepository: AuthenticationRepository,
+    private val userRepository: UserRepository
 ): ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -26,6 +29,9 @@ class AuthenticationViewModel @Inject constructor(
 
     private val _usernameCheckState = MutableStateFlow<UsernameCheckState>(UsernameCheckState.Idle)
     val usernameCheckState = _usernameCheckState.asStateFlow()
+
+    private val _user = MutableStateFlow<User?>(null)
+    val user = _user.asStateFlow()
 
     init {
         isUserAuthenticated()
@@ -52,12 +58,12 @@ class AuthenticationViewModel @Inject constructor(
                         email = email,
                         photoUrl = null,
                         faceEmbedding = null,
-                        status = UserStatus.ONLINE,
-                        lastSeen = System.currentTimeMillis(),
-                        createdAt = System.currentTimeMillis()
+                        status = UserStatus.online,
+                        lastSeen = Timestamp.now(),
+                        createdAt = Timestamp.now()
                     )
 
-                    authenticationRepository.saveUserProfile(user).fold(
+                    userRepository.saveUserProfile(user).fold(
                         onSuccess = {
                             _authState.value = AuthState.AuthenticatedWithoutVerification
                         },
@@ -91,22 +97,6 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    fun verifyPhoneCredential(credential: PhoneAuthCredential) {
-        viewModelScope.launch {
-            _authState.value = AuthState.Loading
-            authenticationRepository.verifyPhoneCredential(credential).fold(
-                onSuccess = {
-                    _authState.value = AuthState.Authenticated
-                    Log.d("Authentication - verifyPhoneCredential()", "Phone number registered")
-                },
-                onFailure = {
-                    _authState.value = AuthState.Error(it.message ?: "Failed to verify phone number")
-                    Log.e("Authentication - verifyPhoneCredential()", "Error verifying phone number")
-                }
-            )
-        }
-    }
-
     fun recoverPassword(email: String) {
         viewModelScope.launch {
             authenticationRepository.recoverPassword(email).fold(
@@ -133,7 +123,7 @@ class AuthenticationViewModel @Inject constructor(
 
     fun isNewUser(userId: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            authenticationRepository.isNewUser(userId).fold(
+            userRepository.isNewUser(userId).fold(
                 onSuccess = { isNew -> onResult(isNew) },
                 onFailure = { onResult(true) }
             )
@@ -148,7 +138,7 @@ class AuthenticationViewModel @Inject constructor(
 
         viewModelScope.launch {
             _usernameCheckState.value = UsernameCheckState.Checking
-            authenticationRepository.checkUsernameAvailable(username).fold(
+            userRepository.checkUsernameAvailable(username).fold(
                 onSuccess = { isAvailable ->
                     _usernameCheckState.value = if (isAvailable) {
                         UsernameCheckState.Available
@@ -168,7 +158,7 @@ class AuthenticationViewModel @Inject constructor(
     }
     fun saveUserProfile(user: User, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            authenticationRepository.saveUserProfile(user).fold(
+            userRepository.saveUserProfile(user).fold(
                 onSuccess = {
                     _authState.value = AuthState.AuthenticatedWithoutVerification
                     onResult(true)
@@ -180,11 +170,15 @@ class AuthenticationViewModel @Inject constructor(
         }
     }
 
-    fun getUserProfile(userId: String, onResult: (User?) -> Unit) {
+    suspend fun getUserProfile(userId: String) {
         viewModelScope.launch {
-            authenticationRepository.getUserProfile(userId).fold(
-                onSuccess = { user -> onResult(user) },
-                onFailure = { onResult(null) }
+            userRepository.getUserProfile(userId).fold(
+                onSuccess = {
+                    _user.value = it
+                },
+                onFailure = {
+                    Log.e("AuthenticationViewModel", "Error getting user profile", it)
+                }
             )
         }
     }
@@ -192,7 +186,7 @@ class AuthenticationViewModel @Inject constructor(
     fun updateUserStatus(status: UserStatus) {
         val userId = getCurrentUserId() ?: return  // ← return simple
         viewModelScope.launch {
-            authenticationRepository.updateUserStatus(userId, status)
+            userRepository.updateUserStatus(userId, status)
         }
     }
 
@@ -204,7 +198,7 @@ class AuthenticationViewModel @Inject constructor(
                 return@launch
             }
 
-            authenticationRepository.updateFaceEmbedding(userId, embedding).fold(
+            userRepository.updateFaceEmbedding(userId, embedding).fold(
                 onSuccess = {
                     onResult(true)
                     _authState.value = AuthState.Authenticated

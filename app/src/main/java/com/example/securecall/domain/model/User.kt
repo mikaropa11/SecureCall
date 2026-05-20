@@ -1,37 +1,39 @@
 package com.example.securecall.domain.model
 
+import com.google.firebase.Timestamp
+
 data class User(
-    val userId: String,
-    val username: String,
-    val name: String,
-    val email: String,
+    val userId: String = "",
+    val username: String = "",
+    val name: String = "",
+    val email: String = "",
     val photoUrl: String? = null,
     val faceEmbedding: List<Float>? = null,
-    val status: UserStatus = UserStatus.OFFLINE,
-    val lastSeen: Long? = null,
-    val createdAt: Long? = null
+    val status: UserStatus = UserStatus.offline,
+    val lastSeen: Timestamp? = null,
+    val createdAt: Timestamp? = null
 )
 
 enum class UserStatus {
-    ONLINE,
-    OFFLINE,
-    IN_CALL;
+    online,
+    offline,
+    in_call;
 
     companion object {
         fun fromString(status: String): UserStatus {
             return when (status.lowercase()) {
-                "online" -> ONLINE
-                "in_call" -> IN_CALL
-                else -> OFFLINE
+                "online" -> online
+                "in_call" -> in_call
+                else -> offline
             }
         }
     }
 
     fun toFirebaseString(): String {
         return when (this) {
-            ONLINE -> "online"
-            OFFLINE -> "offline"
-            IN_CALL -> "in_call"
+            online -> "online"
+            offline -> "offline"
+            in_call -> "in_call"
         }
     }
 }

@@ -14,21 +14,22 @@ fun UserDto.toDomain(userId: String): User {
         photoUrl = photoUrl,
         faceEmbedding = faceEmbedding?.map { it.toFloat() },
         status = UserStatus.fromString(status),
-        lastSeen = lastSeen?.seconds?.times(1000),
-        createdAt = createdAt?.seconds?.times(1000)
+        lastSeen = lastSeen,
+        createdAt = createdAt
     )
 }
 
 fun User.toDto(): UserDto {
     return UserDto(
         username = username,
+        usernameLowercase = username.lowercase(),
         name = name,
         email = email,
         photoUrl = photoUrl,
         faceEmbedding = faceEmbedding?.map { it.toDouble() },
         status = status.toFirebaseString(),
-        lastSeen = lastSeen?.let { Timestamp(it / 1000, 0) },
-        createdAt = createdAt?.let { Timestamp(it / 1000, 0) }
+        lastSeen = lastSeen,
+        createdAt = createdAt
     )
 }
 
