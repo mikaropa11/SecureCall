@@ -43,6 +43,11 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {
@@ -72,4 +77,22 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    // PyTorch
+    implementation(libs.pytorch.android)
+    // CameraX
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
+    //MediaPipe
+    implementation(libs.mediapipe.tasks.vision)
+    //Guava
+    implementation(libs.guava)
+    //Room
+    implementation(libs.room)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    //Coil
+    implementation(libs.coil.compose)
+    //WebRTC
+    implementation(libs.webrtc)
 }

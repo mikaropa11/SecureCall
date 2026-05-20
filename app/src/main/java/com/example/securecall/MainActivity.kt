@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.example.securecall.navigation.NavGraph
@@ -28,6 +29,8 @@ class MainActivity : ComponentActivity() {
             delay(1500L)
             isChecking = false
         }
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         installSplashScreen().apply {
             setKeepOnScreenCondition {
