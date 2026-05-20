@@ -41,6 +41,41 @@
     <string name="error_login_failed">Inici de sessió fallit</string>
     <string name="error_password_reset_failed">Recuperació de contrasenya fallida</string>
 
+    <!-- Face Recognition Screen -->
+    <string name="face_access_granted">Accés concedit</string>
+    <string name="face_registered">Rostre registrat</string>
+    <string name="face_not_matching">Rostre no reconegut</string>
+    <string name="face_detecting">Detectant rostre</string>
+    <string name="face_place_inside_frame">Col·loca la cara dins del marc</string>
+
+    <string name="access_without_verification">Accedir sense verificació</string>
+    <string name="access_with_password">Accedir amb contrasenya</string>
+
+    <!-- Home Screen – Header -->
+    <string name="home_identity_verified">Identitat verificada</string>
+    <string name="home_search">Cerca</string>
+    <string name="home_menu">Menú</string>
+    <string name="home_new_video_call">Nova videotrucada</string>
+    <string name="home_no_chats">No hi ha converses</string>
+
+    <!-- Home Screen – Filters -->
+    <string name="filter_all">Tots</string>
+    <string name="filter_verified">Verificats</string>
+    <string name="filter_unverified">Sense verificar</string>
+
+    <!-- Chat Item – Status -->
+    <string name="chat_status_online">En línia</string>
+    <string name="chat_status_last_seen">Últ. connexió fa 2h</string>
+
+    <!-- Chat Item – Verification -->
+    <string name="verification_verified">Verificat</string>
+    <string name="verification_unverified">No verificat</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_chat">Xat</string>
+    <string name="nav_calls">Trucada</string>
+    <string name="nav_profile">Perfil</string>
+
     <!-- Common -->
     <string name="ok">OK</string>
     <string name="back">Tornar</string>

@@ -35,6 +35,7 @@ import com.example.securecall.ui.viewmodel.UsernameCheckState
 fun SignUpScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToFaceRegistration: () -> Unit,
     viewModel: AuthenticationViewModel = hiltViewModel()
 ) {
     var name by remember { mutableStateOf("") }
@@ -71,8 +72,7 @@ fun SignUpScreen(
     // Navegar cuando se registre exitosamente
     LaunchedEffect(authState) {
         if (authState is AuthState.AuthenticatedWithoutVerification) {
-            onNavigateToHome()
-            //onNavigateToFaceRegistration()
+            onNavigateToFaceRegistration()
         }
     }
 

@@ -40,6 +40,41 @@
     <string name="error_login_failed">Inicio de sesión fallido</string>
     <string name="error_password_reset_failed">Recuperación de contraseña fallida</string>
 
+    <!-- Face Recognition Screen -->
+    <string name="face_access_granted">Acceso concedido</string>
+    <string name="face_registered">Rostro registrado</string>
+    <string name="face_not_matching">Rostro no reconocido</string>
+    <string name="face_detecting">Detectando rostro</string>
+    <string name="face_place_inside_frame">Coloca tu rostro dentro del marco</string>
+
+    <string name="access_without_verification">Acceder sin verificación</string>
+    <string name="access_with_password">Acceder con contraseña</string>
+
+    <!-- Home Screen – Header -->
+    <string name="home_identity_verified">Identidad verificada</string>
+    <string name="home_search">Buscar</string>
+    <string name="home_menu">Menú</string>
+    <string name="home_new_video_call">Nueva videollamada</string>
+    <string name="home_no_chats">No hay conversaciones</string>
+
+    <!-- Home Screen – Filters -->
+    <string name="filter_all">Todos</string>
+    <string name="filter_verified">Verificados</string>
+    <string name="filter_unverified">Sin verificar</string>
+
+    <!-- Chat Item – Status -->
+    <string name="chat_status_online">Online</string>
+    <string name="chat_status_last_seen">Últ. conexión hace 2h</string>
+
+    <!-- Chat Item – Verification -->
+    <string name="verification_verified">Verificado</string>
+    <string name="verification_unverified">No verificado</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_chat">Chat</string>
+    <string name="nav_calls">Llamada</string>
+    <string name="nav_profile">Perfil</string>
+
     <!-- Common -->
     <string name="ok">OK</string>
     <string name="back">Volver</string>

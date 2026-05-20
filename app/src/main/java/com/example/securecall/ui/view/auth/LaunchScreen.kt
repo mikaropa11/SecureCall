@@ -8,14 +8,14 @@ import com.example.securecall.ui.viewmodel.AuthenticationViewModel
 @Composable
 fun LaunchScreen (
     viewModel: AuthenticationViewModel = hiltViewModel(),
-    onNavigateToLogin: () -> Unit,
+    onNavigateToFaceRecognition: () -> Unit,
     onNavigateToSignUp: () -> Unit
 ){
 
     val currentUser = viewModel.getCurrentUserId()
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
-            onNavigateToLogin()
+            onNavigateToFaceRecognition()
         } else {
             onNavigateToSignUp()
         }
