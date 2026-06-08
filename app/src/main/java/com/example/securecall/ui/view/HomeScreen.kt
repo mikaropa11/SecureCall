@@ -37,9 +37,10 @@ import com.example.securecall.R
 import com.example.securecall.ui.components.ChatItem
 import com.example.securecall.ui.components.IncomingCallDialog
 import com.example.securecall.ui.components.SearchResultsContent
+import com.example.securecall.domain.model.CallType
 import com.example.securecall.ui.viewmodel.CallViewModel
 import com.example.securecall.ui.viewmodel.ChatViewModel
-import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 
 // ── Filter tab enum ──────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ fun HomeScreen(
     onNavigateToChat: (String) -> Unit,
     onNavigateToCalls: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToIncomingCall: (String, String) -> Unit,
+    onNavigateToIncomingCall: (String, String, CallType) -> Unit,
     onNavigateToNewCall: () -> Unit,
     onNavigateToSearch: () -> Unit,
     onOpenMenu: () -> Unit
@@ -64,11 +65,13 @@ fun HomeScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val chats by viewModel.chats.collectAsState()
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
     val incomingCall by callViewModel.incomingCall.collectAsState()
 
     var searchExpanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
+    var isOpeningChat by remember { mutableStateOf(false) }
     val results by viewModel.searchResults.collectAsState()
 
     val filteredChats = remember(chats, selectedFilter) {
@@ -84,7 +87,7 @@ fun HomeScreen(
             callerName = call.callerId,
             onAccept = {
                 callViewModel.clearIncomingCall()
-                onNavigateToIncomingCall(call.callId, call.callerId)
+                onNavigateToIncomingCall(call.callId, call.callerId, call.callType())
             },
             onReject = {
                 callViewModel.clearIncomingCall()
@@ -95,7 +98,8 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         viewModel.navigateToChat.collect { chatId ->
-            chatId?.let { onNavigateToChat(it) }
+            isOpeningChat = false
+            onNavigateToChat(chatId)
         }
     }
 
@@ -121,7 +125,7 @@ fun HomeScreen(
                         ) {
                             Image(
                                 painter = painterResource(id = R.mipmap.ic_launcher_foreground),
-                                contentDescription = "Logo",
+                                contentDescription = null,
                                 modifier = Modifier.size(48.dp)
                             )
 
@@ -151,11 +155,20 @@ fun HomeScreen(
                                 .padding(end = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            IconButton(onClick = { searchExpanded = true }) {
-                                Icon(Icons.Filled.Search, contentDescription = null)
+                            IconButton(onClick = {
+                                isOpeningChat = false
+                                searchExpanded = true
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Search,
+                                    contentDescription = stringResource(R.string.home_search)
+                                )
                             }
                             IconButton(onClick = onOpenMenu) {
-                                Icon(Icons.Outlined.MoreVert, contentDescription = null)
+                                Icon(
+                                    imageVector = Icons.Outlined.MoreVert,
+                                    contentDescription = stringResource(R.string.home_menu)
+                                )
                             }
                         }
 
@@ -170,12 +183,13 @@ fun HomeScreen(
                                 onClick = {
                                     searchExpanded = false
                                     query = ""
+                                    isOpeningChat = false
                                     viewModel.clearSearch()
                                 }
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = null
+                                    contentDescription = stringResource(R.string.cd_back)
                                 )
                             }
 
@@ -188,7 +202,7 @@ fun HomeScreen(
                                 },
                                 placeholder = {
                                     Text(
-                                        "Buscar usuarios...",
+                                        stringResource(R.string.search_users_placeholder),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                     )
@@ -299,7 +313,7 @@ fun HomeScreen(
                             null
                         )
                     },
-                    label = { Text("Chats") }
+                    label = { Text(stringResource(R.string.nav_chats)) }
                 )
 
                 NavigationBarItem(
@@ -314,7 +328,7 @@ fun HomeScreen(
                             null
                         )
                     },
-                    label = { Text("Calls") }
+                    label = { Text(stringResource(R.string.nav_calls)) }
                 )
 
                 NavigationBarItem(
@@ -329,7 +343,7 @@ fun HomeScreen(
                             null
                         )
                     },
-                    label = { Text("Profile") }
+                    label = { Text(stringResource(R.string.nav_profile)) }
                 )
             }
         },
@@ -347,12 +361,15 @@ fun HomeScreen(
         if (searchExpanded) {
             SearchResultsContent(
                 results = results,
+                isOpening = isOpeningChat,
                 onUserClick = { user ->
-                    searchExpanded = false
-                    query = ""
-
-                    viewModel.onUserClick(user)
-
+                    if (!isOpeningChat) {
+                        isOpeningChat = true
+                        searchExpanded = false
+                        query = ""
+                        viewModel.clearSearch()
+                        viewModel.onUserClick(user)
+                    }
                 },
                 modifier = Modifier.padding(innerPadding)
             )
@@ -381,6 +398,7 @@ fun HomeScreen(
                     items(filteredChats, key = { it.chatId }) { chat ->
                         ChatItem(
                             chat = chat,
+                            currentUserId = currentUserId,
                             onClick = {
                                 Log.d("CHAT_CLICK", chat.chatId)
                                 onNavigateToChat(chat.chatId) }

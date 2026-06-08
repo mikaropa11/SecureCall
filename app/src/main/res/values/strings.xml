@@ -46,6 +46,11 @@
     <string name="face_not_matching">Rostro no reconocido</string>
     <string name="face_detecting">Detectando rostro</string>
     <string name="face_place_inside_frame">Coloca tu rostro dentro del marco</string>
+    <string name="register_step_frontal">Mira al frente</string>
+    <string name="register_step_left">Gira levemente a la izquierda</string>
+    <string name="register_step_right">Gira levemente a la derecha</string>
+    <string name="register_step_completed">Paso completado</string>
+    <string name="register_face_later">Registrarse después</string>
 
     <string name="access_without_verification">Acceder sin verificación</string>
     <string name="access_with_password">Acceder con contraseña</string>
@@ -56,6 +61,8 @@
     <string name="home_menu">Menú</string>
     <string name="home_new_video_call">Nueva videollamada</string>
     <string name="home_no_chats">No hay conversaciones</string>
+    <string name="search_users_placeholder">Buscar usuarios...</string>
+    <string name="search_no_results">No hay resultados</string>
 
     <!-- Home Screen – Filters -->
     <string name="filter_all">Todos</string>
@@ -64,16 +71,37 @@
 
     <!-- Chat Item – Status -->
     <string name="chat_status_online">Online</string>
+    <string name="chat_status_offline">Offline</string>
+    <string name="chat_status_in_call">En llamada</string>
     <string name="chat_status_last_seen">Últ. conexión hace 2h</string>
+    <string name="chat_no_messages_preview">Sin mensajes todavia</string>
+    <string name="chat_empty_messages">Todavia no hay mensajes</string>
+    <string name="chat_unknown_contact">Contacto</string>
+    <string name="chat_new_messages">Mensajes nuevos</string>
+    <string name="chat_last_message_you">Tú</string>
 
     <!-- Chat Item – Verification -->
     <string name="verification_verified">Verificado</string>
     <string name="verification_unverified">No verificado</string>
 
     <!-- Bottom Navigation -->
+    <string name="nav_chats">Chats</string>
     <string name="nav_chat">Chat</string>
     <string name="nav_calls">Llamada</string>
     <string name="nav_profile">Perfil</string>
+
+    <!-- Chat actions -->
+    <string name="message_input_placeholder">Escribe un mensaje...</string>
+    <string name="message_status_sent">Enviado</string>
+    <string name="message_status_delivered">Entregado</string>
+    <string name="message_status_read">Leido</string>
+    <string name="cd_back">Volver</string>
+    <string name="cd_video_call">Videollamada</string>
+    <string name="cd_audio_call">Llamada</string>
+    <string name="cd_more">Mas opciones</string>
+    <string name="cd_attach">Adjuntar</string>
+    <string name="cd_camera">Camara</string>
+    <string name="cd_send">Enviar</string>
 
     <!-- Common -->
     <string name="ok">OK</string>

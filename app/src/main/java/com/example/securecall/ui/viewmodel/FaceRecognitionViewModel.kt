@@ -3,10 +3,9 @@ package com.example.securecall.ui.viewmodel
 import androidx.camera.core.ImageProxy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.securecall.data.repository.FaceResult
-import com.example.securecall.domain.repository.AuthenticationRepository
+import com.example.securecall.data.repository.AuthResult
+import com.example.securecall.data.repository.RegisterResult
 import com.example.securecall.domain.repository.FaceRepository
-import com.example.securecall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FaceRecognitionViewModel @Inject constructor(
-    private val repository: FaceRepository,
-    private val userRepository: UserRepository
+    private val repository: FaceRepository
 ) : ViewModel() {
 
     private val _faceState = MutableStateFlow<FaceState>(FaceState.Detecting)
@@ -38,35 +36,19 @@ class FaceRecognitionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
 
-                val result = repository.getEmbedding(imageProxy)
-
-                when (result) {
-
-                    is FaceResult.Success -> {
-                        repository.addEmbedding(result.embedding)
-
-                        if (repository.hasEnoughFrames()) {
-                            val finalEmbedding = repository.getAveragedEmbedding()
-                            repository.resetEmbeddings()
-                            var match = false
-                            finalEmbedding?.let {
-                                match = repository.compareEmbedding(it)
-                            }
-                            if (match) {
-                                _faceState.value = FaceState.Match
-                                _authState.value = AuthState.Authenticated
-                            } else {
-                                _faceState.value = FaceState.NotMatching
-                            }
-
-                        }
+                when (repository.authenticate(imageProxy)) {
+                    AuthResult.Collecting -> Unit
+                    AuthResult.Match -> {
+                        _faceState.value = FaceState.Match
+                        _authState.value = AuthState.Authenticated
                     }
-
-                    FaceResult.NoFace -> {
+                    AuthResult.NoMatch -> {
+                        _faceState.value = FaceState.NotMatching
+                    }
+                    AuthResult.NoFace -> {
                         _faceState.value = FaceState.NoFace
                     }
-
-                    FaceResult.Error -> {
+                    is AuthResult.Error -> {
                         _faceState.value = FaceState.Detecting
                     }
                 }
@@ -89,28 +71,17 @@ class FaceRecognitionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
 
-                val result = repository.getEmbedding(imageProxy)
-
-                when (result) {
-
-                    is FaceResult.Success -> {
-                        repository.addEmbedding(result.embedding)
-
-                        if (repository.hasEnoughFrames()) {
-                            val finalEmbedding = repository.getAveragedEmbedding()
-                            repository.resetEmbeddings()
-
-                            userRepository.saveEmbedding(finalEmbedding)
-                            _faceState.value = FaceState.Registered
-                            _authState.value = AuthState.Authenticated
-                        }
+                when (repository.register(imageProxy)) {
+                    RegisterResult.CollectingFrames -> Unit
+                    is RegisterResult.StepCompleted -> Unit
+                    RegisterResult.Saved -> {
+                        _faceState.value = FaceState.Registered
+                        _authState.value = AuthState.Authenticated
                     }
-
-                    FaceResult.NoFace -> {
+                    RegisterResult.NoFace -> {
                         _faceState.value = FaceState.NoFace
                     }
-
-                    FaceResult.Error -> {
+                    is RegisterResult.Error -> {
                         _faceState.value = FaceState.Detecting
                     }
                 }

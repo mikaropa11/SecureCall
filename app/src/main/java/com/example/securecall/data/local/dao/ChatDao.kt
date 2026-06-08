@@ -6,12 +6,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.securecall.data.local.entity.ChatEntity
+import com.example.securecall.domain.model.SyncStatus
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChatDao {
 
-    @Query("SELECT * FROM chats ORDER BY lastMessageTimestamp DESC")
+    @Query("SELECT * FROM chats WHERE lastMessageTimestamp IS NOT NULL ORDER BY lastMessageTimestamp DESC")
     fun getAllChats(): Flow<List<ChatEntity>>
 
     @Query("SELECT * FROM chats WHERE chatId = :chatId")
@@ -29,6 +30,19 @@ interface ChatDao {
     @Query("UPDATE chats SET unreadCount = 0 WHERE chatId = :chatId")
     suspend fun resetUnreadCount(chatId: String)
 
+    @Query("UPDATE chats SET unreadCount = unreadCount + 1 WHERE chatId = :chatId")
+    suspend fun incrementUnreadCount(chatId: String)
+
     @Query("UPDATE chats SET lastMessage = :lastMessage, lastMessageTimestamp = :lastMessageTimestamp WHERE chatId = :chatId")
     suspend fun updateLastMessage(chatId: String, lastMessage: String?, lastMessageTimestamp: Long?)
+
+    @Query("UPDATE chats SET syncStatus = :syncStatus, updatedAt = :updatedAt WHERE chatId = :chatId")
+    suspend fun updateSyncStatus(
+        chatId: String,
+        syncStatus: SyncStatus,
+        updatedAt: Long = System.currentTimeMillis()
+    )
+
+    @Query("SELECT * FROM chats WHERE syncStatus != :synced")
+    suspend fun getPendingChats(synced: SyncStatus = SyncStatus.SYNCED): List<ChatEntity>
 }

@@ -6,10 +6,11 @@ import org.webrtc.IceCandidate
 fun IceCandidateDocument.toIceCandidate() =
     IceCandidate(sdpMid, sdpMLineIndex, sdp)
 
-fun IceCandidate.toDocument() =
+fun IceCandidate.toDocument(senderId: String) =
     IceCandidateDocument(
         sdpMid = sdpMid,
         sdpMLineIndex = sdpMLineIndex,
         sdp = sdp,
-        serverUrl = serverUrl ?: ""
+        serverUrl = serverUrl ?: "",
+        senderId = senderId
     )

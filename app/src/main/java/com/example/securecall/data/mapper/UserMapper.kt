@@ -1,9 +1,11 @@
 package com.example.securecall.data.mapper
 
+import com.example.securecall.data.local.entity.UserEntity
 import com.example.securecall.data.remote.dto.UserDto
 import com.example.securecall.domain.model.User
 import com.example.securecall.domain.model.UserStatus
 import com.google.firebase.Timestamp
+import java.util.Date
 
 fun UserDto.toDomain(userId: String): User {
     return User(
@@ -19,8 +21,37 @@ fun UserDto.toDomain(userId: String): User {
     )
 }
 
+fun UserEntity.toDomain(): User {
+    return User(
+        userId = userId,
+        username = username,
+        name = name,
+        email = email,
+        photoUrl = photoUrl,
+        faceEmbedding = faceEmbedding,
+        status = UserStatus.fromString(status),
+        lastSeen = lastSeen?.let { Timestamp(Date(it)) },
+        createdAt = createdAt?.let { Timestamp(Date(it)) }
+    )
+}
+
+fun User.toEntity(): UserEntity {
+    return UserEntity(
+        userId = userId,
+        username = username,
+        name = name,
+        email = email,
+        photoUrl = photoUrl,
+        faceEmbedding = faceEmbedding,
+        status = status.toFirebaseString(),
+        lastSeen = lastSeen?.toDate()?.time,
+        createdAt = createdAt?.toDate()?.time
+    )
+}
+
 fun User.toDto(): UserDto {
     return UserDto(
+        userId = userId,
         username = username,
         usernameLowercase = username.lowercase(),
         name = name,

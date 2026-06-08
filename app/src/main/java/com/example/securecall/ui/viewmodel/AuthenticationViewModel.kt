@@ -86,6 +86,9 @@ class AuthenticationViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             authenticationRepository.loginWithEmail(email, password).fold(
                 onSuccess = {
+                    authenticationRepository.currentUser?.uid?.let { userId ->
+                        userRepository.updateUserStatus(userId, UserStatus.online)
+                    }
                     _authState.value = AuthState.AuthenticatedWithoutVerification
                     Log.d("Authentication - loginWithEmail()", "$email registered")
                 },
@@ -113,8 +116,13 @@ class AuthenticationViewModel @Inject constructor(
     }
 
     fun logOut() {
-        authenticationRepository.logOut()
-        _authState.value = AuthState.Unauthenticated
+        viewModelScope.launch {
+            authenticationRepository.currentUser?.uid?.let { userId ->
+                userRepository.updateUserStatus(userId, UserStatus.offline)
+            }
+            authenticationRepository.logOut()
+            _authState.value = AuthState.Unauthenticated
+        }
     }
 
     fun getCurrentUserId(): String? {

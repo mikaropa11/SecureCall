@@ -37,16 +37,18 @@ interface WebRTCRepository {
 
     suspend fun sendIceCandidate(
         callId: String,
-        candidate: IceCandidate
+        candidate: IceCandidate,
+        senderId: String
     ): Result<Unit>
 
-    fun listenForIceCandidates(callId: String): Flow<IceCandidate>
+    fun listenForIceCandidates(callId: String, localUserId: String): Flow<IceCandidate>
 
     fun addIceCandidate(candidate: IceCandidate)
 
     fun initializeSession(
         observer: PeerConnection.Observer,
-        localRenderer: SurfaceViewRenderer
+        localRenderer: SurfaceViewRenderer,
+        isVideoCall: Boolean
     ): Result<Unit>
     fun getEglContext(): EglBase.Context
     fun setMicEnabled(enabled: Boolean)

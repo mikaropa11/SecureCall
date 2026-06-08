@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.securecall.data.remote.dto.CallDto
 import com.example.securecall.domain.model.CallStatus
 import com.example.securecall.domain.model.CallType
+import com.example.securecall.domain.model.UserStatus
+import com.example.securecall.domain.repository.UserRepository
 import com.example.securecall.domain.repository.WebRTCRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +25,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CallViewModel @Inject constructor(
-    private val repository: WebRTCRepository
+    private val repository: WebRTCRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -46,6 +49,7 @@ class CallViewModel @Inject constructor(
     private var offerJob: Job? = null
     private var iceCandidatesJob: Job? = null
     private var callStatusJob: Job? = null
+    private var disconnectedWarningJob: Job? = null
 
     // ─────────────────────────────────────────────────────────────────────────
     // INITIALIZATION
@@ -66,12 +70,28 @@ class CallViewModel @Inject constructor(
         observer: PeerConnection.Observer,
         localRenderer: SurfaceViewRenderer,
         isCaller: Boolean,
-        receiverId: String
+        receiverId: String,
+        callType: CallType
     ) {
 
         currentCallId = callId
 
-        repository.initializeSession(observer, localRenderer)
+        repository.initializeSession(
+            observer = observer,
+            localRenderer = localRenderer,
+            isVideoCall = callType == CallType.VIDEO
+        ).onFailure {
+            emitError(it.message ?: "Failed to initialize call")
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isVideoCall = callType == CallType.VIDEO,
+                isCameraEnabled = callType == CallType.VIDEO,
+                isWaitingForPermissions = false
+            )
+        }
 
         observeIceCandidates(callId)
         observeCallStatus(callId)
@@ -85,7 +105,7 @@ class CallViewModel @Inject constructor(
                 callId = callId,
                 callerId = callerId,
                 receiverId = receiverId,
-                type = CallType.VIDEO.name,
+                type = callType.name,
                 status = CallStatus.CALLING.name,
                 timestamp = System.currentTimeMillis()
             )
@@ -183,8 +203,13 @@ class CallViewModel @Inject constructor(
         iceCandidatesJob?.cancel()
 
         iceCandidatesJob = viewModelScope.launch {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            if (userId == null) {
+                emitError("User not authenticated")
+                return@launch
+            }
 
-            repository.listenForIceCandidates(callId)
+            repository.listenForIceCandidates(callId, userId)
                 .collect { candidate ->
 
                     repository.addIceCandidate(candidate)
@@ -197,16 +222,51 @@ class CallViewModel @Inject constructor(
     ) {
 
         val callId = currentCallId ?: return
+        val senderId = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+            emitError("User not authenticated")
+            return
+        }
 
         viewModelScope.launch {
 
             repository.sendIceCandidate(
                 callId = callId,
-                candidate = candidate
+                candidate = candidate,
+                senderId = senderId
             ).onFailure {
                 emitError(it.message ?: "Failed to send ICE candidate")
             }
         }
+    }
+
+    fun onIceConnectionStateChanged(state: PeerConnection.IceConnectionState?) {
+        _uiState.update { it.copy(iceConnectionState = state?.name) }
+
+        when (state) {
+            PeerConnection.IceConnectionState.FAILED -> {
+                disconnectedWarningJob?.cancel()
+                emitError("Error de conexion")
+            }
+            PeerConnection.IceConnectionState.DISCONNECTED -> {
+                disconnectedWarningJob?.cancel()
+                disconnectedWarningJob = viewModelScope.launch {
+                    kotlinx.coroutines.delay(5_000)
+                    if (_uiState.value.iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED.name) {
+                        emitError("Conexion inestable")
+                    }
+                }
+            }
+            PeerConnection.IceConnectionState.CONNECTED,
+            PeerConnection.IceConnectionState.COMPLETED -> {
+                disconnectedWarningJob?.cancel()
+                _uiState.update { it.copy(error = null) }
+            }
+            else -> Unit
+        }
+    }
+
+    fun onIceGatheringStateChanged(state: PeerConnection.IceGatheringState?) {
+        _uiState.update { it.copy(iceGatheringState = state?.name) }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -216,6 +276,7 @@ class CallViewModel @Inject constructor(
     private fun observeCallStatus(callId: String) {
 
         callStatusJob?.cancel()
+        disconnectedWarningJob?.cancel()
 
         callStatusJob = viewModelScope.launch {
 
@@ -231,6 +292,7 @@ class CallViewModel @Inject constructor(
                     when (status) {
 
                         CallStatus.ONGOING -> {
+                            updateCurrentUserStatus(UserStatus.in_call)
                             _uiState.update {
                                 it.copy(
                                     isConnecting = false,
@@ -271,6 +333,7 @@ class CallViewModel @Inject constructor(
     }
 
     fun toggleCamera() {
+        if (!_uiState.value.isVideoCall) return
 
         val enabled = !_uiState.value.isCameraEnabled
 
@@ -333,6 +396,7 @@ class CallViewModel @Inject constructor(
         cancelAllJobs()
 
         repository.cleanup()
+        updateCurrentUserStatus(UserStatus.online)
 
         _uiState.update {
             it.copy(
@@ -353,6 +417,8 @@ class CallViewModel @Inject constructor(
         offerJob = null
         iceCandidatesJob = null
         callStatusJob = null
+        disconnectedWarningJob?.cancel()
+        disconnectedWarningJob = null
     }
 
     private fun emitError(message: String) {
@@ -378,6 +444,33 @@ class CallViewModel @Inject constructor(
         _incomingCall.value = null
     }
 
+    private fun updateCurrentUserStatus(status: UserStatus) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            userRepository.updateUserStatus(userId, status)
+        }
+    }
+
+    fun waitingForPermissions(callType: CallType) {
+        _uiState.update {
+            it.copy(
+                isWaitingForPermissions = true,
+                isVideoCall = callType == CallType.VIDEO,
+                error = null
+            )
+        }
+    }
+
+    fun permissionsDenied() {
+        _uiState.update {
+            it.copy(
+                isWaitingForPermissions = false,
+                isConnecting = false,
+                error = "Permisos requeridos denegados"
+            )
+        }
+    }
+
     companion object {
         private const val CALL_TIMEOUT_MS = 30_000L
     }
@@ -401,5 +494,13 @@ data class CallUiState(
 
     val isSpeakerEnabled: Boolean = true,
 
-    val error: String? = null
+    val isVideoCall: Boolean = true,
+
+    val isWaitingForPermissions: Boolean = false,
+
+    val error: String? = null,
+
+    val iceConnectionState: String? = null,
+
+    val iceGatheringState: String? = null
 )

@@ -14,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.securecall.R
 
 @Composable
 fun ChatBottomBar(
@@ -53,7 +55,7 @@ fun ChatBottomBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.AttachFile,
-                    contentDescription = "Attach",
+                    contentDescription = stringResource(R.string.cd_attach),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -73,7 +75,7 @@ fun ChatBottomBar(
                     modifier = Modifier.weight(1f),
                     placeholder = {
                         Text(
-                            "Escribe un mensaje...",
+                            stringResource(R.string.message_input_placeholder),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
@@ -96,7 +98,7 @@ fun ChatBottomBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera",
+                        contentDescription = stringResource(R.string.cd_camera),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
@@ -108,17 +110,24 @@ fun ChatBottomBar(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(
+                        if (text.isBlank()) MaterialTheme.colorScheme.surfaceVariant
+                        else MaterialTheme.colorScheme.primary
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 IconButton(
                     onClick = onSend,
+                    enabled = text.isNotBlank(),
                     modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send",
-                        tint = MaterialTheme.colorScheme.onPrimary,
+                        contentDescription = stringResource(R.string.cd_send),
+                        tint = if (text.isBlank())
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        else
+                            MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }

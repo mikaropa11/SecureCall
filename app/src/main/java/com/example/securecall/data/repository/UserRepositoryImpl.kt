@@ -4,7 +4,9 @@ import android.util.Log
 import com.example.securecall.data.local.dao.UserDao
 import com.example.securecall.data.mapper.toDomain
 import com.example.securecall.data.mapper.toDto
+import com.example.securecall.data.mapper.toEntity
 import com.example.securecall.data.mapper.toUserDto
+import com.example.securecall.domain.model.SyncStatus
 import com.example.securecall.domain.model.User
 import com.example.securecall.domain.model.UserStatus
 import com.example.securecall.domain.repository.UserRepository
@@ -52,6 +54,13 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUserProfile(user: User): Result<Unit> {
+        userDao.insertUser(
+            user.toEntity().copy(
+                syncStatus = SyncStatus.PENDING,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+
         return try {
             Log.d("SaveUser", "User received: ${user.toString()}")
             val normalizedUsername = user.username.lowercase().trim()
@@ -89,8 +98,10 @@ class UserRepositoryImpl @Inject constructor(
 
 
             Log.d("SaveUser", "Username saved in usernames collection")
+            userDao.updateSyncStatus(user.userId, SyncStatus.SYNCED)
             Result.success(Unit)
         } catch (e: Exception) {
+            userDao.updateSyncStatus(user.userId, SyncStatus.FAILED)
             Result.failure(e)
         }
     }
@@ -148,6 +159,8 @@ class UserRepositoryImpl @Inject constructor(
 
 
     override suspend fun getUserProfile(userId: String): Result<User> {
+        syncPendingUsers()
+        val cachedUser = userDao.getUser(userId)?.toDomain()
         return try {
             val document = firebaseFirestore.collection("users")
                 .document(userId)
@@ -157,16 +170,20 @@ class UserRepositoryImpl @Inject constructor(
             if (document.exists()) {
                 val data = document.data ?: return Result.failure(Exception("Empty document"))
                 val userDto = data.toUserDto()
-                Result.success(userDto.toDomain(userId))
+                val user = userDto.toDomain(userId)
+                userDao.insertUser(user.toEntity().copy(syncStatus = SyncStatus.SYNCED))
+                Result.success(user)
             } else {
-                Result.failure(Exception("User profile not found"))
+                cachedUser?.let { Result.success(it) }
+                    ?: Result.failure(Exception("User profile not found"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            cachedUser?.let { Result.success(it) } ?: Result.failure(e)
         }
     }
 
     override suspend fun searchUsers(query: String): Result<List<User>> {
+        syncPendingUsers()
 
         return try {
 
@@ -181,6 +198,10 @@ class UserRepositoryImpl @Inject constructor(
                 it.toObject(User::class.java)?.copy(userId = it.id)
             }
 
+            users.forEach { user ->
+                userDao.insertUser(user.toEntity().copy(syncStatus = SyncStatus.SYNCED))
+            }
+
             Result.success(users)
 
         } catch (e: Exception) {
@@ -189,6 +210,38 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateUserStatus(userId: String, status: UserStatus): Result<Unit> {
+        syncPendingUsers()
+        val now = System.currentTimeMillis()
+        val cachedUser = userDao.getUser(userId)
+        if (status == UserStatus.offline && cachedUser?.status == UserStatus.in_call.toFirebaseString()) {
+            return Result.success(Unit)
+        }
+        if (cachedUser == null) {
+            userDao.insertUser(
+                com.example.securecall.data.local.entity.UserEntity(
+                    userId = userId,
+                    username = currentUser?.displayName.orEmpty(),
+                    name = currentUser?.displayName.orEmpty(),
+                    email = currentUser?.email.orEmpty(),
+                    photoUrl = currentUser?.photoUrl?.toString(),
+                    faceEmbedding = null,
+                    status = status.toFirebaseString(),
+                    lastSeen = now,
+                    createdAt = null,
+                    syncStatus = SyncStatus.PENDING,
+                    updatedAt = now
+                )
+            )
+        } else {
+            userDao.updateStatus(
+                userId = userId,
+                status = status.toFirebaseString(),
+                lastSeen = now,
+                syncStatus = SyncStatus.PENDING,
+                updatedAt = now
+            )
+        }
+
         return try {
             firebaseFirestore.collection("users")
                 .document(userId)
@@ -200,8 +253,10 @@ class UserRepositoryImpl @Inject constructor(
                 )
                 .await()
 
+            userDao.updateSyncStatus(userId, SyncStatus.SYNCED)
             Result.success(Unit)
         } catch (e: Exception) {
+            userDao.updateSyncStatus(userId, SyncStatus.FAILED)
             Result.failure(e)
         }
     }
@@ -221,6 +276,21 @@ class UserRepositoryImpl @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun syncPendingUsers() {
+        userDao.getPendingUsers().forEach { entity ->
+            runCatching {
+                val user = entity.toDomain()
+                firebaseFirestore.collection("users")
+                    .document(user.userId)
+                    .set(user.toDto().toMap())
+                    .await()
+                userDao.updateSyncStatus(user.userId, SyncStatus.SYNCED)
+            }.onFailure {
+                Log.e("UserRepository", "Pending user sync failed: ${entity.userId}", it)
+            }
         }
     }
 

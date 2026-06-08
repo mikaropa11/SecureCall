@@ -47,6 +47,11 @@
     <string name="face_not_matching">Rostre no reconegut</string>
     <string name="face_detecting">Detectant rostre</string>
     <string name="face_place_inside_frame">Col·loca la cara dins del marc</string>
+    <string name="register_step_frontal">Mira endavant</string>
+    <string name="register_step_left">Gira lleument a l\'esquerra</string>
+    <string name="register_step_right">Gira lleument a la dreta</string>
+    <string name="register_step_completed">Pas completat</string>
+    <string name="register_face_later">Registrar-se després</string>
 
     <string name="access_without_verification">Accedir sense verificació</string>
     <string name="access_with_password">Accedir amb contrasenya</string>
@@ -57,6 +62,8 @@
     <string name="home_menu">Menú</string>
     <string name="home_new_video_call">Nova videotrucada</string>
     <string name="home_no_chats">No hi ha converses</string>
+    <string name="search_users_placeholder">Cercar usuaris...</string>
+    <string name="search_no_results">No hi ha resultats</string>
 
     <!-- Home Screen – Filters -->
     <string name="filter_all">Tots</string>
@@ -65,16 +72,37 @@
 
     <!-- Chat Item – Status -->
     <string name="chat_status_online">En línia</string>
+    <string name="chat_status_offline">Fora de linia</string>
+    <string name="chat_status_in_call">En trucada</string>
     <string name="chat_status_last_seen">Últ. connexió fa 2h</string>
+    <string name="chat_no_messages_preview">Sense missatges encara</string>
+    <string name="chat_empty_messages">Encara no hi ha missatges</string>
+    <string name="chat_unknown_contact">Contacte</string>
+    <string name="chat_new_messages">Missatges nous</string>
+    <string name="chat_last_message_you">Tu</string>
 
     <!-- Chat Item – Verification -->
     <string name="verification_verified">Verificat</string>
     <string name="verification_unverified">No verificat</string>
 
     <!-- Bottom Navigation -->
+    <string name="nav_chats">Xats</string>
     <string name="nav_chat">Xat</string>
     <string name="nav_calls">Trucada</string>
     <string name="nav_profile">Perfil</string>
+
+    <!-- Chat actions -->
+    <string name="message_input_placeholder">Escriu un missatge...</string>
+    <string name="message_status_sent">Enviat</string>
+    <string name="message_status_delivered">Entregat</string>
+    <string name="message_status_read">Llegit</string>
+    <string name="cd_back">Tornar</string>
+    <string name="cd_video_call">Videotrucada</string>
+    <string name="cd_audio_call">Trucada</string>
+    <string name="cd_more">Mes opcions</string>
+    <string name="cd_attach">Adjuntar</string>
+    <string name="cd_camera">Camera</string>
+    <string name="cd_send">Enviar</string>
 
     <!-- Common -->
     <string name="ok">OK</string>

@@ -10,17 +10,24 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.example.securecall.domain.model.UserStatus
+import com.example.securecall.domain.repository.UserRepository
 import com.example.securecall.navigation.NavGraph
 import com.example.securecall.ui.theme.SecureCallTheme
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * The Main Activity
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var userRepository: UserRepository
+    @Inject lateinit var firebaseAuth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -42,6 +49,23 @@ class MainActivity : ComponentActivity() {
             SecureCallTheme {
                 MainScreen()
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        updatePresence(UserStatus.online)
+    }
+
+    override fun onStop() {
+        updatePresence(UserStatus.offline)
+        super.onStop()
+    }
+
+    private fun updatePresence(status: UserStatus) {
+        val userId = firebaseAuth.currentUser?.uid ?: return
+        lifecycleScope.launch {
+            userRepository.updateUserStatus(userId, status)
         }
     }
 }

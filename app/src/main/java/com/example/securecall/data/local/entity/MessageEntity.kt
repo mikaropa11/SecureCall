@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.securecall.domain.model.MessageStatus
+import com.example.securecall.domain.model.SyncStatus
 
 @Entity(tableName = "messages",
     indices = [Index(value = ["chatId"])],
@@ -21,6 +22,8 @@ data class MessageEntity(
     val senderId: String,
     val content: String,
     val timestamp: Long,
-    val status: MessageStatus
+    val status: MessageStatus,
+    val syncStatus: SyncStatus = SyncStatus.PENDING,
+    val updatedAt: Long = System.currentTimeMillis()
 )
 

@@ -12,6 +12,7 @@ fun ChatEntity.toDomain(): Chat {
         otherPhotoUrl = otherPhotoUrl,
         otherStatus = otherStatus,
         lastMessage = lastMessage,
+        lastMessageSenderId = lastMessageSenderId,
         lastMessageTimestamp = lastMessageTimestamp,
         unreadCount = unreadCount,
         isVerified = isVerified
@@ -27,6 +28,7 @@ fun Chat.toEntity(): ChatEntity {
         otherPhotoUrl = otherPhotoUrl,
         otherStatus = otherStatus,
         lastMessage = lastMessage,
+        lastMessageSenderId = lastMessageSenderId,
         lastMessageTimestamp = lastMessageTimestamp,
         unreadCount = unreadCount,
         isVerified = isVerified

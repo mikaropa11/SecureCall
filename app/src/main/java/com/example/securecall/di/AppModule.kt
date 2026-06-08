@@ -50,8 +50,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideChatRepository(chatDao: ChatDao, firestore: FirebaseFirestore, auth: FirebaseAuth):
-            ChatRepository = ChatRepositoryImpl(chatDao, firestore, auth)
+    fun provideChatRepository(chatDao: ChatDao, userDao: UserDao, firestore: FirebaseFirestore, auth: FirebaseAuth):
+            ChatRepository = ChatRepositoryImpl(chatDao, userDao, firestore, auth)
 
     @Provides
     @Singleton

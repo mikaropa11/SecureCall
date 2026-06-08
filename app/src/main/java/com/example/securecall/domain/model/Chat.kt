@@ -8,6 +8,7 @@ data class Chat(
     val otherPhotoUrl: String? = null,
     val otherStatus: UserStatus = UserStatus.offline,
     val lastMessage: String? = null,
+    val lastMessageSenderId: String? = null,
     val lastMessageTimestamp: Long? = null,
     val unreadCount: Int = 0,
     val isVerified: Boolean = false

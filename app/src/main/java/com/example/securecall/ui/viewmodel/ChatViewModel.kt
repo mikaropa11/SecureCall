@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.securecall.domain.model.User
 import com.example.securecall.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -26,11 +28,17 @@ class ChatViewModel @Inject constructor(
     private var _chat = MutableStateFlow<Chat?>(null)
     val chat = _chat.asStateFlow()
 
+    private val _openedUnreadCount = MutableStateFlow(0)
+    val openedUnreadCount = _openedUnreadCount.asStateFlow()
+
     private val _searchResults = MutableStateFlow<List<User>>(emptyList())
     val searchResults = _searchResults.asStateFlow()
 
-    private val _navigateToChat = MutableStateFlow<String?>(null)
-    val navigateToChat = _navigateToChat.asStateFlow()
+    private val _navigateToChat = MutableSharedFlow<String>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+    val navigateToChat = _navigateToChat.asSharedFlow()
 
     init {
         getChats()
@@ -62,6 +70,23 @@ class ChatViewModel @Inject constructor(
 
             } catch (e: java.lang.Exception) {
                 Log.e("ChatViewModel", "Error resetting unread", e)
+            }
+        }
+    }
+
+    fun openChat(chatId: String) {
+
+        viewModelScope.launch {
+
+            try {
+
+                val selectedChat = chatRepository.getChat(chatId)
+                _chat.value = selectedChat
+                _openedUnreadCount.value = selectedChat?.unreadCount ?: 0
+                chatRepository.resetUnread(chatId)
+
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error opening chat", e)
             }
         }
     }
@@ -112,9 +137,5 @@ class ChatViewModel @Inject constructor(
                 throw e
             }
         }
-    }
-
-    fun clearNavigation() {
-        _navigateToChat.value = null
     }
 }

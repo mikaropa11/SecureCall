@@ -8,10 +8,24 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+if (rootProject.file("secrets.gradle").exists()) {
+    apply(from = rootProject.file("secrets.gradle"))
+}
+
+fun secret(name: String): String =
+    extra.properties[name]?.toString().orEmpty()
+
+fun String.toBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
 android {
     namespace = "com.example.securecall"
     compileSdk {
         version = release(36)
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     defaultConfig {
@@ -19,9 +33,11 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "0.0.1"
+        versionName = "0.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "TURN_USERNAME", secret("TURN_USERNAME").toBuildConfigString())
+        buildConfigField("String", "TURN_CREDENTIAL", secret("TURN_CREDENTIAL").toBuildConfigString())
     }
 
     buildTypes {
@@ -42,6 +58,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         jniLibs {

@@ -183,14 +183,18 @@ class WebRTCRepositoryImpl(
         }
 
 
-    override suspend fun sendIceCandidate(callId: String, candidate: IceCandidate) : Result<Unit> =
+    override suspend fun sendIceCandidate(
+        callId: String,
+        candidate: IceCandidate,
+        senderId: String
+    ) : Result<Unit> =
         runCatching {
             iceCandidatesCol(callId)
-                .add(candidate.toDocument())
+                .add(candidate.toDocument(senderId))
                 .await()
         }
 
-    override fun listenForIceCandidates(callId: String): Flow<IceCandidate> =
+    override fun listenForIceCandidates(callId: String, localUserId: String): Flow<IceCandidate> =
         callbackFlow {
 
             val listener = iceCandidatesCol(callId)
@@ -204,9 +208,12 @@ class WebRTCRepositoryImpl(
                     snapshot?.documentChanges
                         ?.filter { it.type == DocumentChange.Type.ADDED }
                         ?.mapNotNull {
-                            it.document
-                                .toObject(IceCandidateDocument::class.java)
-                                .toIceCandidate()
+                            val document = it.document.toObject(IceCandidateDocument::class.java)
+                            if (document.senderId == localUserId) {
+                                null
+                            } else {
+                                document.toIceCandidate()
+                            }
                         }
                         ?.forEach { trySend(it) }
                 }
@@ -220,13 +227,14 @@ class WebRTCRepositoryImpl(
 
     override fun initializeSession(
         observer: PeerConnection.Observer,
-        localRenderer: SurfaceViewRenderer
+        localRenderer: SurfaceViewRenderer,
+        isVideoCall: Boolean
     ): Result<Unit> = runCatching {
 
-        val ok = webRTCClient.initializePeerConnection(observer)
+        val ok = webRTCClient.initializePeerConnection(observer, isVideoCall)
         if (!ok) throw IllegalStateException("PeerConnection init failed")
 
-        webRTCClient.setupLocalTracks(localRenderer)
+        webRTCClient.setupLocalTracks(localRenderer, isVideoCall)
     }
 
     override fun getEglContext(): EglBase.Context = webRTCClient.getEglContext()

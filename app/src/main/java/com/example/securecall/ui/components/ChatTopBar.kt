@@ -1,7 +1,16 @@
 package com.example.securecall.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,16 +19,23 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.securecall.R
+import com.example.securecall.domain.model.CallType
 import com.example.securecall.domain.model.UserStatus
 
 @Composable
@@ -30,7 +46,7 @@ fun ChatTopBar(
     isVerified: Boolean,
     status: UserStatus,
     onBack: () -> Unit,
-    onCall: (receiverId: String) -> Unit,
+    onCall: (receiverId: String, callType: CallType) -> Unit,
     onMore: () -> Unit
 ) {
     Column(
@@ -42,32 +58,29 @@ fun ChatTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 6.dp),
+                .padding(start = 2.dp, end = 4.dp, top = 6.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ── Botón atrás ──────────────────────────────────────────────────
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = stringResource(R.string.cd_back)
                 )
             }
 
-            // ── Avatar ───────────────────────────────────────────────────────
             if (!photoUrl.isNullOrBlank()) {
                 AsyncImage(
                     model = photoUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                 )
             } else {
-                // Placeholder cuando no hay foto
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
@@ -83,21 +96,22 @@ fun ChatTopBar(
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            // ── Nombre + estado ───────────────────────────────────────────────
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = username,
+                        text = username.ifBlank { stringResource(R.string.chat_unknown_contact) },
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
 
                     if (isVerified) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.Default.Shield,
-                            contentDescription = "Verified",
-                            // mismo color primario que el resto de la app
+                            contentDescription = stringResource(R.string.verification_verified),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(15.dp)
                         )
@@ -105,35 +119,46 @@ fun ChatTopBar(
                 }
 
                 Text(
-                    text = status.toFirebaseString(),
+                    text = when (status) {
+                        UserStatus.online -> stringResource(R.string.chat_status_online)
+                        UserStatus.in_call -> stringResource(R.string.chat_status_in_call)
+                        UserStatus.offline -> stringResource(R.string.chat_status_offline)
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = when (status) {
-                        UserStatus.online  -> Color(0xFF4CAF50)
+                        UserStatus.online -> Color(0xFF28C76F)
                         UserStatus.in_call -> Color(0xFFFFA000)
-                        else               -> MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                        UserStatus.offline -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1
                 )
             }
 
-            // ── Acciones ─────────────────────────────────────────────────────
-            IconButton(onClick = { onCall(userId) }) {
-                Icon(Icons.Default.Videocam, contentDescription = "Video call")
+            IconButton(onClick = { onCall(userId, CallType.VIDEO) }) {
+                Icon(
+                    imageVector = Icons.Default.Videocam,
+                    contentDescription = stringResource(R.string.cd_video_call)
+                )
             }
-            IconButton(onClick = { onCall(userId) }) {
-                Icon(Icons.Default.Phone, contentDescription = "Call")
+            IconButton(onClick = { onCall(userId, CallType.AUDIO) }) {
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = stringResource(R.string.cd_audio_call)
+                )
             }
             IconButton(onClick = onMore) {
-                Icon(Icons.Default.MoreVert, contentDescription = "More")
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.cd_more)
+                )
             }
         }
 
-        // Divisor sutil igual que en HomeScreen
         Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp)
                 .height(1.dp)
-                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.18f))
         )
     }
 }

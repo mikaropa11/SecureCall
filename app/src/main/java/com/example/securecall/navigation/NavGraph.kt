@@ -9,12 +9,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.securecall.ui.components.RequestCallPermissions
+import com.example.securecall.domain.model.CallType
 import com.example.securecall.ui.view.HomeScreen
 import com.example.securecall.ui.view.auth.FaceRecognitionScreen
 import com.example.securecall.ui.view.auth.FaceMode
 import com.example.securecall.ui.view.auth.LaunchScreen
 import com.example.securecall.ui.view.auth.LoginScreen
+import com.example.securecall.ui.view.auth.RegisterFaceScreen
 import com.example.securecall.ui.view.auth.SignUpScreen
 import com.example.securecall.ui.view.call.CallScreen
 import com.example.securecall.ui.view.messaging.ChatScreen
@@ -35,14 +36,19 @@ fun NavGraph(navController: NavHostController) {
         )}
         composable(route = "home") { HomeScreen(
             onNavigateToChat = { chatId ->
-                navController.navigate("chat/$chatId")
+                navController.navigate("chat/$chatId") {
+                    launchSingleTop = true
+                    popUpTo("home") {
+                        inclusive = false
+                    }
+                }
             },
             onNavigateToCalls = { // TODO: navigate to CallsScreen
                 },
             onNavigateToProfile = { // TODO: navigate to ProfileScreen
                 },
-            onNavigateToIncomingCall = { callId, callerId ->
-                navController.navigate("call/$callId/$callerId/false")
+            onNavigateToIncomingCall = { callId, callerId, callType ->
+                navController.navigate("call/$callId/$callerId/${callType.name}/false")
             },
             onNavigateToNewCall = { // TODO: navigate to NewVideoCallScreen
             },
@@ -76,17 +82,18 @@ fun NavGraph(navController: NavHostController) {
             )
         }
         composable("faceRecognition/{mode}") { backStackEntry ->
-
-            val mode = when (backStackEntry.arguments?.getString("mode")) {
-                "registry" -> FaceMode.REGISTRY
-                else -> FaceMode.AUTH
+            if (backStackEntry.arguments?.getString("mode") == "registry") {
+                RegisterFaceScreen(
+                    onNavigateToLogin = { navController.navigate("login") },
+                    onNavigateToHome = { navController.navigate("home") }
+                )
+            } else {
+                FaceRecognitionScreen(
+                    onNavigateToLogin = { navController.navigate("login") },
+                    onNavigateToHome = { navController.navigate("home") },
+                    mode = FaceMode.AUTH
+                )
             }
-
-            FaceRecognitionScreen(
-                onNavigateToLogin = { navController.navigate("login") },
-                onNavigateToHome = { navController.navigate("home") },
-                mode = mode
-            )
         }
 
         composable("chat/{chatId}") { backStackEntry ->
@@ -98,18 +105,21 @@ fun NavGraph(navController: NavHostController) {
 
             ChatScreen(chatId = chatId,
                 onBack = { navController.popBackStack() },
-                onCall = { receiverId ->
+                onCall = { receiverId, callType ->
                     val callId = UUID.randomUUID().toString()
-                    navController.navigate("call/$callId/$receiverId/true")
+                    navController.navigate("call/$callId/$receiverId/${callType.name}/true")
                 },
                 onMore = { /*TODO*/ }
             )
         }
 
         composable(
-            route = "call/{callId}/{receiverId}/{isCaller}",
+            route = "call/{callId}/{receiverId}/{callType}/{isCaller}",
             arguments = listOf(
                 navArgument("callId") {
+                    type = NavType.StringType
+                },
+                navArgument("callType") {
                     type = NavType.StringType
                 },
                 navArgument("isCaller") {
@@ -127,41 +137,46 @@ fun NavGraph(navController: NavHostController) {
             val isCaller =
                 backStackEntry.arguments?.getBoolean("isCaller") ?: false
 
+            val callType = backStackEntry.arguments
+                ?.getString("callType")
+                ?.let { runCatching { CallType.valueOf(it) }.getOrNull() }
+                ?: CallType.VIDEO
+
             val viewModel: CallViewModel = hiltViewModel()
 
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            RequestCallPermissions {
-                CallScreen(
-                    callId = callId,
-                    receiverId = receiverId,
-                    isCaller = isCaller,
-                    uiState = uiState,
-                    viewModel = viewModel,
+            CallScreen(
+                callId = callId,
+                receiverId = receiverId,
+                isCaller = isCaller,
+                callType = callType,
+                contactName = receiverId,
+                uiState = uiState,
+                viewModel = viewModel,
 
-                    onAccept = {
-                        // future incoming flow
-                    },
+                onAccept = {
+                    // future incoming flow
+                },
 
-                    onReject = {
-                        viewModel.rejectCall(callId)
-                        navController.popBackStack()
-                    },
+                onReject = {
+                    viewModel.rejectCall(callId)
+                    navController.popBackStack()
+                },
 
-                    onEndCall = {
-                        viewModel.endCall()
-                        navController.popBackStack()
-                    },
+                onEndCall = {
+                    viewModel.endCall()
+                    navController.popBackStack()
+                },
 
-                    onToggleMic = viewModel::toggleMic,
+                onToggleMic = viewModel::toggleMic,
 
-                    onToggleCamera = viewModel::toggleCamera,
+                onToggleCamera = viewModel::toggleCamera,
 
-                    onSwitchCamera = viewModel::switchCamera,
+                onSwitchCamera = viewModel::switchCamera,
 
-                    onToggleSpeaker = viewModel::toggleSpeaker
-                )
-            }
+                onToggleSpeaker = viewModel::toggleSpeaker
+            )
         }
     }
 }

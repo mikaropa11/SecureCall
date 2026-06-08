@@ -5,4 +5,5 @@ data class IceCandidateDocument(
     val sdpMLineIndex: Int = 0,
     val sdp: String = "",
     val serverUrl: String = "",
+    val senderId: String = "",
 )

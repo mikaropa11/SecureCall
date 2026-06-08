@@ -2,6 +2,7 @@ package com.example.securecall.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.securecall.domain.model.SyncStatus
 import com.example.securecall.domain.model.UserStatus
 
 @Entity(tableName = "chats")
@@ -15,7 +16,10 @@ data class ChatEntity(
     val otherPhotoUrl: String? = null,
     val otherStatus: UserStatus,
     val lastMessage: String? = null,
+    val lastMessageSenderId: String? = null,
     val lastMessageTimestamp: Long? = null,
     val unreadCount: Int = 0,
-    val isVerified: Boolean = false
+    val isVerified: Boolean = false,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val updatedAt: Long = System.currentTimeMillis()
 )
